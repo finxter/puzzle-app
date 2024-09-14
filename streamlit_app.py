@@ -1,9 +1,19 @@
 import streamlit as st
 import openai
 import os
+import sys
+from io import StringIO
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Initialize OpenAI API key
 openai.api_key = st.secrets.get("OPENAI_KEY", "")
+
+# Debug: Check if API key is loaded
+st.write(f"OpenAI Key Loaded: {'Yes' if openai.api_key else 'No'}")
 
 # Function to generate code puzzles using GPT-3.5
 def generate_puzzle(difficulty):
@@ -23,10 +33,16 @@ def generate_puzzle(difficulty):
             max_tokens=150,
             temperature=0.5,
         )
-        code = response['choices'][0]['message']['content'].strip()
+        code = response.choices[0].message.content.strip()
+        logger.info("Puzzle generated successfully.")
         return code
+    except openai.error.OpenAIError as e:
+        logger.error(f"OpenAI API Error: {e}")
+        st.error(f"OpenAI API Error: {e}")
+        return None
     except Exception as e:
-        st.error(f"Error generating puzzle: {e}")
+        logger.error(f"Unexpected Error: {e}")
+        st.error(f"Unexpected Error: {e}")
         return None
 
 # Function to get the output of a code snippet
@@ -81,7 +97,8 @@ def load_new_puzzle():
 
 # If no puzzle is loaded yet, load one
 if st.session_state.current_puzzle is None:
-    load_new_puzzle()
+    with st.spinner("Generating a new puzzle..."):
+        load_new_puzzle()
 
 # Display the current puzzle
 with st.expander("🔍 View the Puzzle Code"):
@@ -112,7 +129,8 @@ if st.button("Submit Answer"):
                 st.warning(f"Let's take it down a notch. Decreasing difficulty to {st.session_state.difficulty}.")
 
         # Load a new puzzle after submission
-        load_new_puzzle()
+        with st.spinner("Loading a new puzzle..."):
+            load_new_puzzle()
     else:
         st.warning("Please enter your guess before submitting.")
 
@@ -132,5 +150,6 @@ if st.sidebar.button("🔄 Reset Game"):
     st.session_state.total = 0
     st.session_state.correct = 0
     st.session_state.difficulty = 1
-    load_new_puzzle()
+    with st.spinner("Resetting the game..."):
+        load_new_puzzle()
     st.sidebar.success("Game has been reset!")
