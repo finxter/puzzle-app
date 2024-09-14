@@ -69,6 +69,8 @@ if 'current_output' not in st.session_state:
     st.session_state.current_output = ""
 if 'difficulty' not in st.session_state:
     st.session_state.difficulty = 1  # Start with easy puzzles
+if 'puzzle_solved' not in st.session_state:
+    st.session_state.puzzle_solved = False  # Track if the puzzle is solved
 
 st.title("🧩 Python Code Puzzle Challenge")
 st.write("Test your understanding of Python by guessing the output of the following code snippets.")
@@ -79,9 +81,10 @@ def load_new_puzzle():
     if code:
         st.session_state.current_puzzle = code
         st.session_state.current_output = get_code_output(code)
+        st.session_state.puzzle_solved = False  # Reset solved status
 
 # If no puzzle is loaded yet, load one
-if st.session_state.current_puzzle is None or st.button("Next Puzzle"):
+if st.session_state.current_puzzle is None:
     with st.spinner("Generating a new puzzle..."):
         load_new_puzzle()
 
@@ -100,6 +103,7 @@ if st.button("Submit Answer"):
         if user_guess.strip() == correct_output:
             st.session_state.score += 10
             st.session_state.correct += 1
+            st.session_state.puzzle_solved = True  # Mark puzzle as solved
             st.success("✅ Correct!")
             # Increase difficulty every 5 correct answers
             if st.session_state.correct % 5 == 0 and st.session_state.difficulty < 5:
@@ -112,12 +116,12 @@ if st.button("Submit Answer"):
             if st.session_state.difficulty > 1 and (st.session_state.total - st.session_state.correct) >= 3:
                 st.session_state.difficulty -= 1
                 st.warning(f"Let's take it down a notch. Decreasing difficulty to {st.session_state.difficulty}.")
-        
-        # Load a new puzzle after submission
-        with st.spinner("Loading a new puzzle..."):
-            load_new_puzzle()
     else:
         st.warning("Please enter your guess before submitting.")
+
+# Next Puzzle button (enabled only if the current puzzle is solved)
+next_puzzle_disabled = not st.session_state.puzzle_solved
+st.button("Next Puzzle", disabled=next_puzzle_disabled, on_click=load_new_puzzle)
 
 # Display the user's performance
 st.sidebar.header("🏆 Your Performance")
@@ -135,6 +139,7 @@ if st.sidebar.button("🔄 Reset Game"):
     st.session_state.total = 0
     st.session_state.correct = 0
     st.session_state.difficulty = 1
+    st.session_state.puzzle_solved = False
     with st.spinner("Resetting the game..."):
         load_new_puzzle()
     st.sidebar.success("Game has been reset!")
