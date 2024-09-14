@@ -1,4 +1,4 @@
-import streamlit as st 
+import streamlit as st
 from openai import OpenAI
 import os
 import sys
@@ -7,14 +7,14 @@ from io import StringIO
 # Initialize OpenAI API key
 client = OpenAI(api_key=st.secrets.get("OPENAI_KEY", ""))
 
-# Function to generate code puzzles using GPT-3.5
+# Function to generate a code puzzle using GPT-3.5
 def generate_puzzle(difficulty):
     prompt = f"""
     Generate a unique Python code snippet that is suitable for a coding puzzle.
     The snippet should have no syntax errors and should not require any external packages.
     The difficulty level is {difficulty} on a scale from 1 (easy) to 30 (hard).
     The code should not simply print a string like "Hello". It should involve basic Python operations, control structures, or data manipulations.
-    Provide the code snippet only without any explanations or comments. 
+    Provide the code snippet only without any explanations or comments.
     The answer given must be executable right away and provide a simple output with at most 10 characters.
     """
     try:
@@ -29,17 +29,13 @@ def generate_puzzle(difficulty):
         )
         code = response.choices[0].message.content.strip().replace("```python", "").replace("```", "")
         return code
-    except openai.error.OpenAIError as e:
-        st.error(f"OpenAI API Error: {e}")
-        return None
     except Exception as e:
-        st.error(f"Unexpected Error: {e}")
+        st.error(f"Error generating puzzle: {e}")
         return None
 
 # Function to get the output of a code snippet
 def get_code_output(code):
     try:
-        # Capture the output of the code
         local_namespace = {}
         old_stdout = sys.stdout
         sys.stdout = StringIO()
@@ -72,9 +68,6 @@ if 'difficulty' not in st.session_state:
 if 'answer_submitted' not in st.session_state:
     st.session_state.answer_submitted = False  # Track if the answer has been submitted
 
-st.title("🧩 Python Code Puzzle Challenge")
-st.write("Test your understanding of Python by guessing the output of the following code snippets.")
-
 # Function to load a new puzzle
 def load_new_puzzle():
     code = generate_puzzle(st.session_state.difficulty)
@@ -83,19 +76,18 @@ def load_new_puzzle():
         st.session_state.current_output = get_code_output(code)
         st.session_state.answer_submitted = False  # Reset submission status
 
-# If no puzzle is loaded yet, load one
+# Generate a new puzzle if there isn't a current puzzle
 if st.session_state.current_puzzle is None:
-    with st.spinner("Generating a new puzzle..."):
-        load_new_puzzle()
+    load_new_puzzle()
 
-# Display the current puzzle (always visible)
+# Display the current puzzle
 st.subheader("🔍 Puzzle Code")
 st.code(st.session_state.current_puzzle, language='python')
 
-# User input for guessing the output (multi-line input, disabled after submission)
+# User input for guessing the output
 user_guess = st.text_area("What is the output of the above code?", height=150, disabled=st.session_state.answer_submitted)
 
-# Submit button (disable after submission)
+# Submit button to check the user's guess
 if st.button("Submit Answer", disabled=st.session_state.answer_submitted):
     if user_guess:
         st.session_state.total += 1
@@ -104,26 +96,24 @@ if st.button("Submit Answer", disabled=st.session_state.answer_submitted):
             st.session_state.score += 10
             st.session_state.correct += 1
             st.success("✅ Correct!")
-            # Increase difficulty every 5 correct answers
             if st.session_state.correct % 5 == 0 and st.session_state.difficulty < 30:
                 st.session_state.difficulty += 1
                 st.info(f"Great job! Increasing difficulty to {st.session_state.difficulty}.")
         else:
             st.session_state.score -= 5
             st.error(f"❌ Incorrect. The correct output was:\n```\n{correct_output}\n```")
-            # Decrease difficulty if there are more than 3 incorrect answers
             if st.session_state.difficulty > 1 and (st.session_state.total - st.session_state.correct) >= 3:
                 st.session_state.difficulty -= 1
                 st.warning(f"Let's take it down a notch. Decreasing difficulty to {st.session_state.difficulty}.")
-        st.session_state.answer_submitted = True  # Prevent further submissions
+        st.session_state.answer_submitted = True
     else:
         st.warning("Please enter your guess before submitting.")
 
-# Next Puzzle button (enabled after submission)
+# Next Puzzle button
 if st.button("Next Puzzle", disabled=not st.session_state.answer_submitted):
     load_new_puzzle()
 
-# Display the user's performance
+# Display user's performance in the sidebar
 st.sidebar.header("🏆 Your Performance")
 st.sidebar.write(f"**Score:** {st.session_state.score}")
 st.sidebar.write(f"**Correct Answers:** {st.session_state.correct}")
@@ -140,6 +130,5 @@ if st.sidebar.button("🔄 Reset Game"):
     st.session_state.correct = 0
     st.session_state.difficulty = 1
     st.session_state.answer_submitted = False
-    with st.spinner("Resetting the game..."):
-        load_new_puzzle()
+    load_new_puzzle()
     st.sidebar.success("Game has been reset!")
