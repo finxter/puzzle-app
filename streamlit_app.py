@@ -16,7 +16,7 @@ def generate_puzzle(difficulty):
     Provide the code snippet only without any explanations or comments.
     """
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant that generates Python code puzzles."},
@@ -25,7 +25,7 @@ def generate_puzzle(difficulty):
             max_tokens=150,
             temperature=0.5,
         )
-        code = response['choices'][0]['message']['content'].strip()
+        code = response.choices[0].message.content.strip()
         return code
     except openai.error.OpenAIError as e:
         st.error(f"OpenAI API Error: {e}")
