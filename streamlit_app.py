@@ -10,12 +10,12 @@ client = OpenAI(api_key=st.secrets.get("OPENAI_KEY", ""))
 # Function to generate code puzzles using GPT-3.5
 def generate_puzzle(difficulty):
     prompt = f"""
-    Generate a Python code snippet that is suitable for a coding puzzle.
+    Generate a unique Python code snippet that is suitable for a coding puzzle.
     The snippet should have no syntax errors and should not require any external packages.
     The difficulty level is {difficulty} on a scale from 1 (easy) to 30 (hard).
+    The code should not simply print a string like "Hello". It should involve basic Python operations, control structures, or data manipulations.
     Provide the code snippet only without any explanations or comments. 
     The answer given must be executable right away and provide a simple output with at most 10 characters.
-    Don't put the Python code snippet into a markdown or any other formatting. I want just plain Python code.
     """
     try:
         response = client.chat.completions.create(
@@ -25,7 +25,7 @@ def generate_puzzle(difficulty):
                 {"role": "user", "content": prompt}
             ],
             max_tokens=150,
-            temperature=0.5,
+            temperature=0.7,  # Increase temperature for more variation
         )
         code = response.choices[0].message.content.strip()
         return code
