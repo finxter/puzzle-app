@@ -5,7 +5,7 @@ import sys
 from io import StringIO
 
 # Initialize OpenAI API key
-client = OpenAI(st.secrets.get("OPENAI_KEY", ""))
+client = OpenAI(api_key=st.secrets.get("OPENAI_KEY", ""))
 
 # Function to generate code puzzles using GPT-3.5
 def generate_puzzle(difficulty):
