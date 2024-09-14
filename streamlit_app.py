@@ -27,7 +27,7 @@ def generate_puzzle(difficulty):
             max_tokens=250,
             temperature=0.7,  # Increase temperature for more variation
         )
-        code = response.choices[0].message.content.strip().replace("```", "").replace("```python", "")
+        code = response.choices[0].message.content.strip().replace("```python", "").replace("```", "")
         return code
     except openai.error.OpenAIError as e:
         st.error(f"OpenAI API Error: {e}")
