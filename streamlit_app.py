@@ -87,7 +87,7 @@ def load_new_puzzle():
         st.session_state.answer_submitted = False  # Reset submission status
 
 # If no puzzle is loaded yet, load one
-if st.session_state.current_puzzle is None:
+if st.session_state.current_puzzle is None or st.session_state.answer_submitted and st.session_state.puzzle_solved:
     with st.spinner("Generating a new puzzle..."):
         load_new_puzzle()
 
@@ -123,8 +123,9 @@ if st.button("Submit Answer", disabled=st.session_state.answer_submitted):
     else:
         st.warning("Please enter your guess before submitting.")
 
-# Next Puzzle button (enabled only after answer is submitted)
-st.button("Next Puzzle", disabled=not st.session_state.answer_submitted, on_click=load_new_puzzle)
+# Next Puzzle button (enabled only after answer is submitted and puzzle is solved)
+if st.button("Next Puzzle", disabled=not st.session_state.puzzle_solved):
+    load_new_puzzle()
 
 # Display the user's performance
 st.sidebar.header("🏆 Your Performance")
