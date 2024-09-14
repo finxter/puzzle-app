@@ -113,4 +113,26 @@ if st.button("Submit Answer"):
         
         # Load a new puzzle after submission
         with st.spinner("Loading a new puzzle..."):
- 
+            load_new_puzzle()
+    else:
+        st.warning("Please enter your guess before submitting.")
+
+# Display the user's performance
+st.sidebar.header("🏆 Your Performance")
+st.sidebar.write(f"**Score:** {st.session_state.score}")
+st.sidebar.write(f"**Correct Answers:** {st.session_state.correct}")
+st.sidebar.write(f"**Total Attempts:** {st.session_state.total}")
+if st.session_state.total > 0:
+    accuracy = (st.session_state.correct / st.session_state.total) * 100
+    st.sidebar.write(f"**Accuracy:** {accuracy:.2f}%")
+st.sidebar.write(f"**Current Difficulty Level:** {st.session_state.difficulty}/5")
+
+# Option to reset the game
+if st.sidebar.button("🔄 Reset Game"):
+    st.session_state.score = 0
+    st.session_state.total = 0
+    st.session_state.correct = 0
+    st.session_state.difficulty = 1
+    with st.spinner("Resetting the game..."):
+        load_new_puzzle()
+    st.sidebar.success("Game has been reset!")
