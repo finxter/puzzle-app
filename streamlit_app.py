@@ -12,7 +12,7 @@ def generate_puzzle(difficulty):
     prompt = f"""
     Generate a Python code snippet that is suitable for a coding puzzle.
     The snippet should have no syntax errors and should not require any external packages.
-    The difficulty level is {difficulty} on a scale from 1 (easy) to 5 (hard).
+    The difficulty level is {difficulty} on a scale from 1 (easy) to 30 (hard).
     Provide the code snippet only without any explanations or comments. 
     The answer given must be executable right away and provide a simple output with at most 10 characters.
     Don't put the Python code snippet into a markdown or any other formatting. I want just plain Python code.
@@ -71,6 +71,8 @@ if 'difficulty' not in st.session_state:
     st.session_state.difficulty = 1  # Start with easy puzzles
 if 'puzzle_solved' not in st.session_state:
     st.session_state.puzzle_solved = False  # Track if the puzzle is solved
+if 'answer_submitted' not in st.session_state:
+    st.session_state.answer_submitted = False  # Track if the answer has been submitted
 
 st.title("🧩 Python Code Puzzle Challenge")
 st.write("Test your understanding of Python by guessing the output of the following code snippets.")
@@ -82,21 +84,22 @@ def load_new_puzzle():
         st.session_state.current_puzzle = code
         st.session_state.current_output = get_code_output(code)
         st.session_state.puzzle_solved = False  # Reset solved status
+        st.session_state.answer_submitted = False  # Reset submission status
 
 # If no puzzle is loaded yet, load one
 if st.session_state.current_puzzle is None:
     with st.spinner("Generating a new puzzle..."):
         load_new_puzzle()
 
-# Display the current puzzle
-with st.expander("🔍 View the Puzzle Code"):
-    st.code(st.session_state.current_puzzle, language='python')
+# Display the current puzzle (always visible)
+st.subheader("🔍 Puzzle Code")
+st.code(st.session_state.current_puzzle, language='python')
 
-# User input for guessing the output
-user_guess = st.text_input("What is the output of the above code?")
+# User input for guessing the output (disable after submission)
+user_guess = st.text_input("What is the output of the above code?", disabled=st.session_state.answer_submitted)
 
-# Submit button
-if st.button("Submit Answer"):
+# Submit button (disable after submission)
+if st.button("Submit Answer", disabled=st.session_state.answer_submitted):
     if user_guess:
         st.session_state.total += 1
         correct_output = st.session_state.current_output
@@ -106,7 +109,7 @@ if st.button("Submit Answer"):
             st.session_state.puzzle_solved = True  # Mark puzzle as solved
             st.success("✅ Correct!")
             # Increase difficulty every 5 correct answers
-            if st.session_state.correct % 5 == 0 and st.session_state.difficulty < 5:
+            if st.session_state.correct % 5 == 0 and st.session_state.difficulty < 30:
                 st.session_state.difficulty += 1
                 st.info(f"Great job! Increasing difficulty to {st.session_state.difficulty}.")
         else:
@@ -116,12 +119,12 @@ if st.button("Submit Answer"):
             if st.session_state.difficulty > 1 and (st.session_state.total - st.session_state.correct) >= 3:
                 st.session_state.difficulty -= 1
                 st.warning(f"Let's take it down a notch. Decreasing difficulty to {st.session_state.difficulty}.")
+        st.session_state.answer_submitted = True  # Prevent further submissions
     else:
         st.warning("Please enter your guess before submitting.")
 
-# Next Puzzle button (enabled only if the current puzzle is solved)
-next_puzzle_disabled = not st.session_state.puzzle_solved
-st.button("Next Puzzle", disabled=next_puzzle_disabled, on_click=load_new_puzzle)
+# Next Puzzle button (enabled only after answer is submitted)
+st.button("Next Puzzle", disabled=not st.session_state.answer_submitted, on_click=load_new_puzzle)
 
 # Display the user's performance
 st.sidebar.header("🏆 Your Performance")
@@ -131,7 +134,7 @@ st.sidebar.write(f"**Total Attempts:** {st.session_state.total}")
 if st.session_state.total > 0:
     accuracy = (st.session_state.correct / st.session_state.total) * 100
     st.sidebar.write(f"**Accuracy:** {accuracy:.2f}%")
-st.sidebar.write(f"**Current Difficulty Level:** {st.session_state.difficulty}/5")
+st.sidebar.write(f"**Current Difficulty Level:** {st.session_state.difficulty}/30")
 
 # Option to reset the game
 if st.sidebar.button("🔄 Reset Game"):
@@ -140,6 +143,7 @@ if st.sidebar.button("🔄 Reset Game"):
     st.session_state.correct = 0
     st.session_state.difficulty = 1
     st.session_state.puzzle_solved = False
+    st.session_state.answer_submitted = False
     with st.spinner("Resetting the game..."):
         load_new_puzzle()
     st.sidebar.success("Game has been reset!")
