@@ -69,8 +69,6 @@ if 'current_output' not in st.session_state:
     st.session_state.current_output = ""
 if 'difficulty' not in st.session_state:
     st.session_state.difficulty = 1  # Start with easy puzzles
-if 'puzzle_solved' not in st.session_state:
-    st.session_state.puzzle_solved = False  # Track if the puzzle is solved
 if 'answer_submitted' not in st.session_state:
     st.session_state.answer_submitted = False  # Track if the answer has been submitted
 
@@ -83,11 +81,10 @@ def load_new_puzzle():
     if code:
         st.session_state.current_puzzle = code
         st.session_state.current_output = get_code_output(code)
-        st.session_state.puzzle_solved = False  # Reset solved status
         st.session_state.answer_submitted = False  # Reset submission status
 
 # If no puzzle is loaded yet, load one
-if st.session_state.current_puzzle is None or st.session_state.answer_submitted and st.session_state.puzzle_solved:
+if st.session_state.current_puzzle is None:
     with st.spinner("Generating a new puzzle..."):
         load_new_puzzle()
 
@@ -106,7 +103,6 @@ if st.button("Submit Answer", disabled=st.session_state.answer_submitted):
         if user_guess.strip() == correct_output:
             st.session_state.score += 10
             st.session_state.correct += 1
-            st.session_state.puzzle_solved = True  # Mark puzzle as solved
             st.success("✅ Correct!")
             # Increase difficulty every 5 correct answers
             if st.session_state.correct % 5 == 0 and st.session_state.difficulty < 30:
@@ -123,8 +119,8 @@ if st.button("Submit Answer", disabled=st.session_state.answer_submitted):
     else:
         st.warning("Please enter your guess before submitting.")
 
-# Next Puzzle button (enabled only after answer is submitted and puzzle is solved)
-if st.button("Next Puzzle", disabled=not st.session_state.puzzle_solved):
+# Next Puzzle button (enabled after submission)
+if st.button("Next Puzzle", disabled=not st.session_state.answer_submitted):
     load_new_puzzle()
 
 # Display the user's performance
@@ -143,7 +139,6 @@ if st.sidebar.button("🔄 Reset Game"):
     st.session_state.total = 0
     st.session_state.correct = 0
     st.session_state.difficulty = 1
-    st.session_state.puzzle_solved = False
     st.session_state.answer_submitted = False
     with st.spinner("Resetting the game..."):
         load_new_puzzle()
