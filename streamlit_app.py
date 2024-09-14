@@ -3,17 +3,9 @@ import openai
 import os
 import sys
 from io import StringIO
-import logging
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # Initialize OpenAI API key
 openai.api_key = st.secrets.get("OPENAI_KEY", "")
-
-# Debug: Check if API key is loaded
-st.write(f"OpenAI Key Loaded: {'Yes' if openai.api_key else 'No'}")
 
 # Function to generate code puzzles using GPT-3.5
 def generate_puzzle(difficulty):
@@ -33,15 +25,12 @@ def generate_puzzle(difficulty):
             max_tokens=150,
             temperature=0.5,
         )
-        code = response.choices[0].message.content.strip()
-        logger.info("Puzzle generated successfully.")
+        code = response['choices'][0]['message']['content'].strip()
         return code
     except openai.error.OpenAIError as e:
-        logger.error(f"OpenAI API Error: {e}")
         st.error(f"OpenAI API Error: {e}")
         return None
     except Exception as e:
-        logger.error(f"Unexpected Error: {e}")
         st.error(f"Unexpected Error: {e}")
         return None
 
@@ -49,13 +38,7 @@ def generate_puzzle(difficulty):
 def get_code_output(code):
     try:
         # Capture the output of the code
-        import sys
-        from io import StringIO
-
-        # Create a separate namespace for code execution
         local_namespace = {}
-
-        # Redirect stdout to capture print statements
         old_stdout = sys.stdout
         sys.stdout = StringIO()
 
