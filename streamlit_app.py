@@ -1,13 +1,13 @@
 import streamlit as st
-from openai import OpenAI
+import openai  # Corrected import from 'from openai import OpenAI' to 'import openai'
 import os
 import sys
 from io import StringIO
 
 # Initialize OpenAI API key
-client = OpenAI(api_key=st.secrets.get("OPENAI_KEY", ""))
+openai.api_key = st.secrets.get("OPENAI_KEY", "")
 
-# Function to generate code puzzles using GPT-3.5
+# Function to generate code puzzles using GPT-4
 def generate_puzzle(difficulty):
     prompt = f"""
     Generate a Python code snippet that is suitable for a coding puzzle.
@@ -18,8 +18,8 @@ def generate_puzzle(difficulty):
     Don't put the Python code snippet into a markdown or any other formatting. I want just plain Python code.
     """
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o",
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant that generates Python code puzzles."},
                 {"role": "user", "content": prompt}
@@ -27,7 +27,7 @@ def generate_puzzle(difficulty):
             max_tokens=150,
             temperature=0.5,
         )
-        code = response.choices[0].message.content.strip()
+        code = response.choices[0].message['content'].strip()
         return code
     except openai.error.OpenAIError as e:
         st.error(f"OpenAI API Error: {e}")
@@ -69,6 +69,8 @@ if 'current_output' not in st.session_state:
     st.session_state.current_output = ""
 if 'difficulty' not in st.session_state:
     st.session_state.difficulty = 1  # Start with easy puzzles
+if 'puzzle_submitted' not in st.session_state:
+    st.session_state.puzzle_submitted = False  # Track if the current puzzle has been submitted
 
 st.title("🧩 Python Code Puzzle Challenge")
 st.write("Test your understanding of Python by guessing the output of the following code snippets.")
@@ -79,6 +81,8 @@ def load_new_puzzle():
     if code:
         st.session_state.current_puzzle = code
         st.session_state.current_output = get_code_output(code)
+        st.session_state.puzzle_submitted = False  # Reset submission state
+        st.session_state.user_guess = ""  # Clear previous guess
 
 # If no puzzle is loaded yet, load one
 if st.session_state.current_puzzle is None:
@@ -90,10 +94,13 @@ with st.expander("🔍 View the Puzzle Code"):
     st.code(st.session_state.current_puzzle, language='python')
 
 # User input for guessing the output
-user_guess = st.text_input("What is the output of the above code?")
+# Disable input if puzzle has been submitted
+user_guess = st.text_input("What is the output of the above code?", value=st.session_state.get('user_guess', ''), disabled=st.session_state.puzzle_submitted)
 
 # Submit button
-if st.button("Submit Answer"):
+submit_button = st.button("Submit Answer", disabled=st.session_state.puzzle_submitted)
+
+if submit_button:
     if user_guess:
         st.session_state.total += 1
         correct_output = st.session_state.current_output
@@ -112,12 +119,17 @@ if st.button("Submit Answer"):
             if st.session_state.difficulty > 1 and (st.session_state.total - st.session_state.correct) >= 3:
                 st.session_state.difficulty -= 1
                 st.warning(f"Let's take it down a notch. Decreasing difficulty to {st.session_state.difficulty}.")
-        
-        # Load a new puzzle after submission
-        with st.spinner("Loading a new puzzle..."):
-            load_new_puzzle()
+
+        st.session_state.puzzle_submitted = True  # Mark puzzle as submitted
+        st.session_state.user_guess = user_guess  # Save the user's guess
     else:
         st.warning("Please enter your guess before submitting.")
+
+# "Next Puzzle" button appears only after submission
+if st.session_state.puzzle_submitted:
+    if st.button("Next Puzzle"):
+        with st.spinner("Loading a new puzzle..."):
+            load_new_puzzle()
 
 # Display the user's performance
 st.sidebar.header("🏆 Your Performance")
@@ -135,6 +147,7 @@ if st.sidebar.button("🔄 Reset Game"):
     st.session_state.total = 0
     st.session_state.correct = 0
     st.session_state.difficulty = 1
+    st.session_state.puzzle_submitted = False
     with st.spinner("Resetting the game..."):
         load_new_puzzle()
     st.sidebar.success("Game has been reset!")
