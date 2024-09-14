@@ -13,7 +13,7 @@ def generate_puzzle(difficulty):
     Generate a Python code snippet that is suitable for a coding puzzle.
     The snippet should have no syntax errors and should not require any external packages.
     The difficulty level is {difficulty} on a scale from 1 (easy) to 5 (hard).
-    Provide the code snippet only without any explanations or comments.
+    Provide the code snippet only without any explanations or comments. The answer given must be executable right away and provide a simple output with at most 10 characters.
     """
     try:
         response = client.chat.completions.create(
