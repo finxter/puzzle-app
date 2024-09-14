@@ -24,7 +24,7 @@ def generate_puzzle(difficulty):
                 {"role": "system", "content": "You are a helpful assistant that generates Python code puzzles."},
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=250,
+            max_tokens=150,
             temperature=0.7,  # Increase temperature for more variation
         )
         code = response.choices[0].message.content.strip().replace("```python", "").replace("```", "")
@@ -92,8 +92,8 @@ if st.session_state.current_puzzle is None:
 st.subheader("🔍 Puzzle Code")
 st.code(st.session_state.current_puzzle, language='python')
 
-# User input for guessing the output (disable after submission)
-user_guess = st.text_input("What is the output of the above code?", disabled=st.session_state.answer_submitted)
+# User input for guessing the output (multi-line input, disabled after submission)
+user_guess = st.text_area("What is the output of the above code?", height=150, disabled=st.session_state.answer_submitted)
 
 # Submit button (disable after submission)
 if st.button("Submit Answer", disabled=st.session_state.answer_submitted):
